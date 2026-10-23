@@ -60,21 +60,42 @@ mysql://<IP>
 
 ---
 
-## Formularios Web (GET)
+## Formularios Web (POST) — el caso habitual
 
-```text
-<IP> http-get /login.php -s <puerto> -f
+El formato de `http-post-form` tiene tres partes separadas por `:` →
+`"<ruta>:<cuerpo con ^USER^/^PASS^>:<condición de fallo>"`.
+
+```bash
+hydra -l admin -P /usr/share/wordlists/rockyou.txt <IP> \
+  http-post-form "/login.php:user=^USER^&pass=^PASS^:F=Login Failed"
+```
+
+- `F=<texto>` → marca el intento como **fallido** si la respuesta contiene ese texto (ej. `Login Failed`, `incorrecta`).
+- `S=<texto>` → al revés: marca como **éxito** si aparece ese texto (ej. `Dashboard`, `Logout`).
+
+> **Consejo:** intercepta el login con Burp para copiar la **ruta exacta**, los **nombres reales** de los campos (`user`/`pass` pueden llamarse `username`/`password`) y el mensaje de error literal. Un solo carácter mal en la cadena hace que Hydra marque todo como válido o todo como inválido.
+
+### Con HTTPS, puerto o cabeceras
+
+```bash
+# HTTPS -> usa https-post-form
+hydra -l admin -P rockyou.txt <IP> https-post-form "/login:username=^USER^&password=^PASS^:F=inválid"
+
+# Puerto distinto y cabeceras (cookie/CSRF token) con H=
+hydra -l admin -P rockyou.txt -s 8080 <IP> http-post-form \
+  "/login:user=^USER^&pass=^PASS^:F=error:H=Cookie: PHPSESSID=abc123"
 ```
 
 ---
 
-## Formularios Web (POST)
+## Formularios Web (GET)
 
-```text
-<IP> http-post-form "/login.php:user=^USER^&pass=^PASS^:Login Failed"
+```bash
+hydra -l admin -P /usr/share/wordlists/rockyou.txt <IP> \
+  http-get-form "/login.php:user=^USER^&pass=^PASS^:F=Login Failed"
 ```
 
-> **Nota:** Sustituye `Login Failed` por el mensaje de error que devuelve la aplicación cuando las credenciales son incorrectas.
+> **Nota:** usa `-f` para detener Hydra en cuanto encuentre una credencial válida, y `-V` para ver cada intento. Autenticación HTTP básica (la ventana emergente del navegador) usa el módulo `http-get` a secas, no `http-get-form`.
 
 ---
 

@@ -1,0 +1,10 @@
+# Archivo de estado / handoff entre conversaciones con Claude (privado, NO subir)
+ESTADO-DEL-PROYECTO.md
+
+# Configuración del editor Obsidian
+.obsidian/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+*.swp
